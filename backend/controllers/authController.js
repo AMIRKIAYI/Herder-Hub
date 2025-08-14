@@ -1,80 +1,120 @@
-const jwt = require('jsonwebtoken');
-const bcrypt = require('bcryptjs');
 const User = require('../models/User');
+const { generateToken } = require('../utils/authUtils');
 
-const generateToken = (user) => {
-  return jwt.sign(
-    { id: user._id }, // Make sure to use _id
-    process.env.JWT_SECRET,
-    { expiresIn: process.env.JWT_EXPIRES_IN }
-  );
+// Set token cookie helper
+const setTokenCookie = (res, token) => {
+  res.cookie('token', token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV !== 'development', // true in production
+    sameSite: 'None', // required for cross-site cookies
+    maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+  });
 };
 
-exports.register = async (req, res) => {
+
+
+
+// @desc    Register new user
+exports.register = async (req, res, next) => {
   try {
     const { username, email, password } = req.body;
-    
-    // Check if user exists
+
+    if (!username || !email || !password) {
+      return res.status(400).json({ message: 'Please fill all fields' });
+    }
+
     const existingUser = await User.findOne({ email });
     if (existingUser) {
       return res.status(400).json({ message: 'User already exists' });
     }
 
-    // Hash password
-    const hashedPassword = await bcrypt.hash(password, 12);
-    
-    // Create user
-    const user = await User.create({
-      username,
-      email,
-      password: hashedPassword
-    });
+    const newUser = await User.create({ username, email, password });
 
-    // Generate token
-    const token = generateToken(user);
+    const token = generateToken(newUser._id);
+    setTokenCookie(res, token);
 
     res.status(201).json({
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email
-      }
+      _id: newUser._id,
+      username: newUser.username,
+      email: newUser.email,
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Registration failed', error: error.message });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.login = async (req, res) => {
+// @desc    Login user
+exports.login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+
     const user = await User.findOne({ email });
-    
-    if (!user) {
+    if (!user || !(await user.matchPassword(password))) {
       return res.status(401).json({ message: 'Invalid credentials' });
     }
 
-    const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials' });
-    }
-
-    const token = generateToken(user);
+    const token = generateToken(user._id);
+    setTokenCookie(res, token);
 
     res.json({
-      token,
-      user: {
-        id: user.id,
-        username: user.username,
-        email: user.email
-      }
+      _id: user._id,
+      username: user.username,
+      email: user.email,
     });
-  } catch (error) {
-    res.status(500).json({ message: 'Login failed', error: error.message });
+  } catch (err) {
+    next(err);
   }
 };
 
-exports.protectedRoute = (req, res) => {
-  res.json({ message: 'This is protected data', user: req.user });
+exports.updateProfile = async (req, res) => {
+  try {
+    const { userId } = req; // From auth middleware
+    const updates = req.body;
+    
+    // Fields that can be updated
+    const allowedUpdates = {
+      phone: updates.phone,
+      location: updates.location,
+      profilePhoto: updates.profilePhoto
+    };
+    
+    // Remove undefined fields
+    Object.keys(allowedUpdates).forEach(
+      key => allowedUpdates[key] === undefined && delete allowedUpdates[key]
+    );
+    
+    // Add updatedAt timestamp
+    allowedUpdates.updatedAt = new Date();
+    
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { $set: allowedUpdates },
+      { new: true, runValidators: true }
+    );
+    
+    res.status(200).json({
+      success: true,
+      data: user,
+      message: 'Profile updated successfully'
+    });
+    
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      message: 'Error updating profile',
+      error: error.message
+    });
+  }
 };
+
+
+// @desc    Logout user
+exports.logout = (req, res) => {
+  res.clearCookie('token', {
+    httpOnly: true,
+    secure: process.env.NODE_ENV !== 'development',
+    sameSite: 'None',
+  });
+  res.json({ message: 'Logged out successfully' });
+}
+
