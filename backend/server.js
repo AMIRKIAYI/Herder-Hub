@@ -5,17 +5,21 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const path = require('path'); // Add this line
 
 const authRoutes = require('./routes/authRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
+const accountRoutes = require('./routes/accountRoutes');
+const listingRoutes = require('./routes/listingRoutes');
 
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
+// Serve static files from the uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
+
 const allowedOrigins = ['http://localhost:5173'];
-
-
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -25,14 +29,13 @@ app.use(cors({
       callback(new Error('Not allowed by CORS'));
     }
   },
-  credentials: true, // ✅ allow cookies to be sent
+  credentials: true,
 }));
 
-
-
-
 // Routes
-app.use('/api/auth', authRoutes); // Mount auth routes under /api/auth
+app.use('/api/auth', authRoutes);
+app.use('/api/account', accountRoutes);
+app.use('/api/listings', listingRoutes);
 
 // Error Middleware
 app.use(errorHandler);

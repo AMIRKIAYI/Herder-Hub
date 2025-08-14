@@ -1,0 +1,14 @@
+
+# Ignore uploads directory
+/uploads/
+# Ignore all files in uploads directory
+# .env
+# Ignore environment variables file
+.env
+# Ignore node_modules directory
+/node_modules/
+# Ignore build directory
+/build/
+# Ignore logs directory
+/logs/
+# Ignore coverage directory 
