@@ -5,12 +5,14 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
-const path = require('path'); // Add this line
+const path = require('path');
 
 const authRoutes = require('./routes/authRoutes');
 const errorHandler = require('./middleware/errorMiddleware');
 const accountRoutes = require('./routes/accountRoutes');
 const listingRoutes = require('./routes/listingRoutes');
+const userRoutes = require('./routes/userRoutes');
+const connectRoutes = require('./routes/connects'); // Add this line
 
 const app = express();
 app.use(express.json());
@@ -36,6 +38,8 @@ app.use(cors({
 app.use('/api/auth', authRoutes);
 app.use('/api/account', accountRoutes);
 app.use('/api/listings', listingRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/connects', connectRoutes); // Add this line
 
 // Error Middleware
 app.use(errorHandler);

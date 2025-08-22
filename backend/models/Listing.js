@@ -17,20 +17,35 @@ const listingSchema = new mongoose.Schema({
     type: { type: String },
     details: { type: String }
   }],
-  // Listing.js
-images: [
-  {
+  images: [{
     url: String,
     filename: String
-  }
-],
-
+  }],
   
+  // Seller information - ADD THESE FIELDS
   seller: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'User', 
     required: true 
   },
+  sellerName: {
+    type: String,
+    required: true
+  },
+  sellerEmail: {
+    type: String,
+    required: true
+  },
+  sellerPhone: {
+    type: String,
+    required: true
+  },
+  preferredContactMethod: {
+    type: String,
+    enum: ['call', 'whatsapp'],
+    default: 'whatsapp'
+  },
+  
   rating: { type: Number, default: 4.5 },
   status: { type: String, enum: ['active', 'sold', 'pending'], default: 'active' },
   createdAt: { type: Date, default: Date.now },

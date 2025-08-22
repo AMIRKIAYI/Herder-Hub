@@ -2,8 +2,6 @@
 const Listing = require('../models/Listing');
 const User = require('../models/User');
 
-
-
 exports.getListings = async (req, res) => {
   try {
     const { 
@@ -18,6 +16,9 @@ exports.getListings = async (req, res) => {
       limit = 10
     } = req.query;
 
+ 
+
+    // Build query object
     const query = { status };
 
     // Price range filter
@@ -27,19 +28,79 @@ exports.getListings = async (req, res) => {
       if (maxPrice) query.price.$lte = Number(maxPrice);
     }
 
-    // Animal type filter
+    // Animal type filter - handle both array and string
     if (animalType) {
-      query.animalType = animalType;
-    }
+  // Handle comma-separated values (from URL query string)
+  if (typeof animalType === 'string' && animalType.includes(',')) {
+    const animalTypes = animalType.split(',');
+    
+    // Convert plural to singular for database query
+    const singularAnimalTypes = animalTypes.map(type => {
+      const pluralToSingular = {
+        'Cattle': 'Cattle', // Cattle stays the same (it's already singular collective noun)
+        'Goats': 'Goat',
+        'Sheep': 'Sheep', // Sheep stays the same (singular and plural are the same)
+        'Camels': 'Camel', 
+        'Donkeys': 'Donkey',
+        'Poultry': 'Poultry' // Poultry stays the same (collective noun)
+      };
+      return pluralToSingular[type] || type;
+    });
+    
+    query.animalType = { $in: singularAnimalTypes };
+  } 
+  // Handle array (from frontend)
+  else if (Array.isArray(animalType)) {
+    // Convert plural to singular for database query
+    const singularAnimalTypes = animalType.map(type => {
+      const pluralToSingular = {
+        'Cattle': 'Cattle',
+        'Goats': 'Goat',
+        'Sheep': 'Sheep',
+        'Camels': 'Camel',
+        'Donkeys': 'Donkey',
+        'Poultry': 'Poultry'
+      };
+      return pluralToSingular[type] || type;
+    });
+    
+    query.animalType = { $in: singularAnimalTypes };
+  } 
+  // Handle single value
+  else {
+    // Convert plural to singular for single value
+    const pluralToSingular = {
+      'Cattle': 'Cattle',
+      'Goats': 'Goat',
+      'Sheep': 'Sheep',
+      'Camels': 'Camel',
+      'Donkeys': 'Donkey',
+      'Poultry': 'Poultry'
+    };
+    query.animalType = pluralToSingular[animalType] || animalType;
+  }
+}
 
-    // Breed filter
+    // Breed filter - handle both array and string
     if (breed) {
-      query.breed = breed;
+      if (typeof breed === 'string' && breed.includes(',')) {
+        query.breed = { $in: breed.split(',') };
+      } else if (Array.isArray(breed)) {
+        query.breed = { $in: breed };
+      } else {
+        query.breed = breed;
+      }
     }
 
-    // Location filter
+    // Location filter - handle both array and string
     if (location) {
-      query.location = location;
+      if (typeof location === 'string' && location.includes(',')) {
+        query.location = { $in: location.split(',') };
+      } else if (Array.isArray(location)) {
+        query.location = { $in: location };
+      } else {
+        query.location = location;
+      }
     }
 
     // Text search
@@ -47,15 +108,18 @@ exports.getListings = async (req, res) => {
       query.$text = { $search: search };
     }
 
+    // Debug log to see the final query
+
+
     const skip = (page - 1) * limit;
 
     const listings = await Listing.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(Number(limit))
-      .populate('seller', 'username phone email location');
+      .limit(Number(limit));
 
     const total = await Listing.countDocuments(query);
+
 
     res.json({
       listings,
@@ -65,7 +129,10 @@ exports.getListings = async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching listings:', error);
-    res.status(500).json({ message: 'Server error while fetching listings' });
+    res.status(500).json({ 
+      message: 'Server error while fetching listings',
+      error: error.message 
+    });
   }
 };
 

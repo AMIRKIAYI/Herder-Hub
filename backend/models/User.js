@@ -1,3 +1,4 @@
+// backend/models/User.js
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
@@ -41,6 +42,14 @@ const UserSchema = new mongoose.Schema({
   profilePhoto: String,
   resetPasswordToken: String,
   resetPasswordExpires: Date,
+  
+  // ADD THIS FIELD
+  preferredContact: {
+    type: String,
+    enum: ['call', 'whatsapp'],
+    default: 'whatsapp'
+  },
+  
   createdAt: {
     type: Date,
     default: Date.now
@@ -49,8 +58,7 @@ const UserSchema = new mongoose.Schema({
     type: Date
   },
 
-
-listings: [{
+  listings: [{
     type: mongoose.Schema.Types.ObjectId,
     ref: 'Listing'
   }],
@@ -71,6 +79,12 @@ UserSchema.pre('save', async function(next) {
   } catch (error) {
     next(error);
   }
+});
+
+// Update timestamp on save
+UserSchema.pre('save', function(next) {
+  this.updatedAt = Date.now();
+  next();
 });
 
 // Match user-entered password to hashed password
