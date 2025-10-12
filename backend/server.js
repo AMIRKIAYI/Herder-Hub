@@ -1,5 +1,5 @@
 const dotenv = require('dotenv');
-dotenv.config(); // Load .env
+dotenv.config();
 
 const express = require('express');
 const mongoose = require('mongoose');
@@ -12,13 +12,14 @@ const errorHandler = require('./middleware/errorMiddleware');
 const accountRoutes = require('./routes/accountRoutes');
 const listingRoutes = require('./routes/listingRoutes');
 const userRoutes = require('./routes/userRoutes');
-const connectRoutes = require('./routes/connects'); // Add this line
+const connectRoutes = require('./routes/connects');
+const transactionRoutes = require('./routes/transactionRoutes'); // Add this line
+const mpesaRoutes = require('./routes/mpesaRoutes');
 
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
 
-// Serve static files from the uploads directory
 app.use('/uploads', express.static(path.join(__dirname, 'public', 'uploads')));
 
 const allowedOrigins = ['http://localhost:5173'];
@@ -39,7 +40,9 @@ app.use('/api/auth', authRoutes);
 app.use('/api/account', accountRoutes);
 app.use('/api/listings', listingRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/connects', connectRoutes); // Add this line
+app.use('/api/connects', connectRoutes);
+app.use('/api/transactions', transactionRoutes); // Add this line
+app.use('/api/mpesa', mpesaRoutes);
 
 // Error Middleware
 app.use(errorHandler);

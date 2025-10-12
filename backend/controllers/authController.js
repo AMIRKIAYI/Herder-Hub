@@ -1,5 +1,7 @@
+// backend/controllers/authController.js
 const User = require('../models/User');
 const { generateToken } = require('../utils/authUtils');
+const { sendRegistrationEmail } = require('../utils/emailService');
 
 // Set token cookie helper
 const setTokenCookie = (res, token) => {
@@ -10,9 +12,6 @@ const setTokenCookie = (res, token) => {
     maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
   });
 };
-
-
-
 
 // @desc    Register new user
 exports.register = async (req, res, next) => {
@@ -30,13 +29,25 @@ exports.register = async (req, res, next) => {
 
     const newUser = await User.create({ username, email, password });
 
+    // Generate token and set cookie
     const token = generateToken(newUser._id);
     setTokenCookie(res, token);
+
+    // Send registration email (non-blocking - don't await)
+    sendRegistrationEmail(email, username)
+      .then(() => {
+        console.log(`Registration email sent successfully to ${email}`);
+      })
+      .catch(error => {
+        console.warn('Failed to send registration email:', error.message);
+        // Don't throw error - registration was successful even if email fails
+      });
 
     res.status(201).json({
       _id: newUser._id,
       username: newUser.username,
       email: newUser.email,
+      message: 'Registration successful! Welcome to our platform.'
     });
   } catch (err) {
     next(err);
@@ -107,7 +118,6 @@ exports.updateProfile = async (req, res) => {
   }
 };
 
-
 // @desc    Logout user
 exports.logout = (req, res) => {
   res.clearCookie('token', {
@@ -117,4 +127,3 @@ exports.logout = (req, res) => {
   });
   res.json({ message: 'Logged out successfully' });
 }
-
