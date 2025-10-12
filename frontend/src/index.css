@@ -1,0 +1,32 @@
+@import "tailwindcss";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+/* Ensure proper stacking context */
+html {
+  position: relative;
+  min-height: 100%;
+}
+
+/* Force hardware acceleration for better blur performance */
+.modal-backdrop {
+  transform: translateZ(0);
+}
+
+/* Explicit backdrop filter support check */
+@supports (backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px)) {
+  .backdrop-blur-fallback {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+}
+
+/* Fallback for browsers without backdrop-filter support */
+@supports not ((backdrop-filter: blur(4px)) or (-webkit-backdrop-filter: blur(4px))) {
+  .backdrop-blur-fallback {
+    background-color: rgba(0, 0, 0, 0.5);
+  }
+}
