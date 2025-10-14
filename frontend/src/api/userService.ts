@@ -1,5 +1,5 @@
 import axios from 'axios';
-import type { AxiosResponse } from 'axios';
+
 import type { UserProfile } from './types/auth';
 
 const api = axios.create({ baseURL: '/api' });

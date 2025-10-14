@@ -3,8 +3,7 @@ import type {
   LoginPayload, 
   RegisterPayload, 
   AuthResponse, 
-  UserProfile,
-  FormErrors 
+  UserProfile
 } from './types/auth';
 
 class AuthServiceClass {

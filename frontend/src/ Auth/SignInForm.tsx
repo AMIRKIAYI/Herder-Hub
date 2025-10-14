@@ -3,7 +3,7 @@ import React from 'react';
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import { Link } from 'react-router-dom';
 import type { AuthFormData, FormErrors } from './types';
-import { useState } from 'react';
+
 
 interface SignInFormProps {
   onSubmit: (formData: AuthFormData) => Promise<void>;
@@ -32,7 +32,7 @@ const SignInForm: React.FC<SignInFormProps> = ({
     rememberMe: false
   });
 
-  const [showSignInForm, setShowSignInForm] = useState(false);
+
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, checked, type } = e.target;

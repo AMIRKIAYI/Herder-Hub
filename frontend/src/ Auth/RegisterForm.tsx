@@ -1,6 +1,6 @@
 // src/Auth/RegisterForm.tsx
 import React from 'react';
-import { Link } from 'react-router-dom';
+
 import { FiEye, FiEyeOff } from 'react-icons/fi';
 import type { AuthFormData, FormErrors } from './types';
 
