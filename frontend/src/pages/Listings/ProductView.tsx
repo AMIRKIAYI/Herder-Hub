@@ -90,6 +90,9 @@ const ProductView = () => {
   const [transaction, setTransaction] = useState<Transaction | null>(null);
   const [paymentError, setPaymentError] = useState('');
   const { user, isAuthenticated } = useAuth();
+  const [emailSubject, setEmailSubject] = useState('');
+const [emailMessage, setEmailMessage] = useState('');
+
 
   const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
@@ -193,6 +196,37 @@ const ProductView = () => {
       }
     }
   };
+  const handleSendEmail = async () => {
+  if (!listing) return toast.error('Listing not found');
+  if (!emailSubject || !emailMessage) {
+    toast.error('Please fill in both subject and message');
+    return;
+  }
+
+  try {
+    await axios.post(`${API_BASE_URL}/email/send`, {
+      sellerEmail: listing.sellerEmail,
+      buyerName: user?.username || 'Anonymous Buyer',
+      subject: emailSubject,
+      message: emailMessage,
+      livestockDetails: {
+        animalType: listing.animalType,
+        breed: listing.breed,
+        price: listing.price,
+        location: listing.location,
+      },
+    });
+
+    toast.success('Email sent to seller successfully!');
+    setEmailSubject('');
+    setEmailMessage('');
+    setContactMethod(null);
+  } catch (error: any) {
+    console.error('Error sending email:', error);
+    toast.error('Failed to send email. Please try again.');
+  }
+};
+
 
   const handleBuyNow = () => {
     if (!isAuthenticated || !user) {
@@ -749,17 +783,80 @@ const handlePayment = async () => {
                 </button>
               </div>
 
-              {contactMethod && (
-                <button
-                  onClick={handleContactSeller}
-                  className="w-full mt-4 px-4 py-3 bg-[#A52A2A] hover:bg-[#8a2323] text-white font-medium rounded-md transition-colors"
-                >
-                  {contactMethod === 'message' && `Message ${listing.sellerName}`}
-                  {contactMethod === 'call' && `Call ${listing.sellerPhone}`}
-                  {contactMethod === 'whatsapp' && `Chat on WhatsApp`}
-                  {contactMethod === 'email' && `Email ${listing.sellerEmail}`}
-                </button>
-              )}
+              {contactMethod && contactMethod !== 'email' && (
+  <button
+    onClick={handleContactSeller}
+    className="w-full mt-4 px-4 py-3 bg-[#A52A2A] hover:bg-[#8a2323] text-white font-medium rounded-md transition-colors"
+  >
+    {contactMethod === 'message' && `Message ${listing.sellerName}`}
+    {contactMethod === 'call' && `Call ${listing.sellerPhone}`}
+    {contactMethod === 'whatsapp' && `Chat on WhatsApp`}
+  </button>
+)}
+{contactMethod === 'message' && (
+  <div className="mt-4 p-4 border rounded-md bg-gray-50">
+    <h4 className="font-semibold text-gray-800 mb-2">
+      Send a Message to {listing.sellerName}
+    </h4>
+    <textarea
+      placeholder="Write your message..."
+      className="w-full px-3 py-2 mb-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A52A2A]"
+      rows={4}
+      value={emailMessage}
+      onChange={(e) => setEmailMessage(e.target.value)}
+    />
+    <button
+      onClick={async () => {
+        if (!emailMessage) return toast.error("Message cannot be empty");
+        try {
+          await axios.post(`${API_BASE_URL}/sms/send`, {
+  sellerPhone: listing.sellerPhone,
+  message: emailMessage,
+  senderName: user?.username || "Anonymous Buyer",
+});
+
+          toast.success("SMS sent successfully!");
+          setEmailMessage("");
+          setContactMethod(null);
+        } catch (error: any) {
+          console.error("Error sending SMS:", error);
+          toast.error("Failed to send SMS. Please try again.");
+        }
+      }}
+      className="w-full px-4 py-2 bg-[#A52A2A] hover:bg-[#8a2323] text-white rounded-md"
+    >
+      Send SMS
+    </button>
+  </div>
+)}
+
+
+{contactMethod === 'email' && (
+  <div className="mt-4 p-4 border rounded-md bg-gray-50">
+    <h4 className="font-semibold text-gray-800 mb-2">Send an Email to {listing.sellerName}</h4>
+    <input
+      type="text"
+      placeholder="Subject"
+      className="w-full px-3 py-2 mb-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A52A2A]"
+      value={emailSubject}
+      onChange={(e) => setEmailSubject(e.target.value)}
+    />
+    <textarea
+      placeholder="Write your message..."
+      className="w-full px-3 py-2 mb-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#A52A2A]"
+      rows={4}
+      value={emailMessage}
+      onChange={(e) => setEmailMessage(e.target.value)}
+    />
+    <button
+      onClick={handleSendEmail}
+      className="w-full px-4 py-2 bg-[#A52A2A] hover:bg-[#8a2323] text-white rounded-md"
+    >
+      Send Email
+    </button>
+  </div>
+)}
+
             </div>
 
             {/* Buy Now Button */}
