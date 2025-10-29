@@ -15,6 +15,8 @@ const userRoutes = require('./routes/userRoutes');
 const connectRoutes = require('./routes/connects');
 const transactionRoutes = require('./routes/transactionRoutes'); // Add this line
 const mpesaRoutes = require('./routes/mpesaRoutes');
+const emailRoutes = require('./routes/emailRoutes');
+const smsRoutes = require("./routes/sms");
 
 const app = express();
 app.use(express.json());
@@ -43,6 +45,9 @@ app.use('/api/users', userRoutes);
 app.use('/api/connects', connectRoutes);
 app.use('/api/transactions', transactionRoutes); // Add this line
 app.use('/api/mpesa', mpesaRoutes);
+app.use('/api/email', emailRoutes);
+app.use('/api/sms', smsRoutes);
+
 
 // Error Middleware
 app.use(errorHandler);
